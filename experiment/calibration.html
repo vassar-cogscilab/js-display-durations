@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    #stim {
+      position: absolute;
+      top: calc(50% - 100px);
+      left: calc(50% - 100px);
+      width: 200px;
+      height: 200px;
+      background-color: black;
+    }
+    #toggle {
+      position: absolute;
+      bottom: 10%;
+      width: 80px;
+      left: calc(50% - 40px);
+    }
+  </style>
+</head>
+<body>
+  <div id="stim"></div>
+  <button id="toggle">Toggle Stimulus</button>
+</body>
+<script>
+var on = true;
+document.querySelector('#toggle').addEventListener('click', function(){
+  on = !on;
+  if(on){
+    document.querySelector('#stim').style.visibility = 'visible';
+  } else {
+    document.querySelector('#stim').style.visibility = 'hidden';
+  }
+})
+</script>
+</html>
