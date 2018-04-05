@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    #stim {
+      position: absolute;
+      top: calc(50% - 100px);
+      left: calc(50% - 100px);
+      width: 200px;
+      height: 200px;
+      background-color: black;
+    }
+    #config {
+      position: absolute;
+      top: 50px;
+      left: calc(50% - 200px);
+      width: 400px;
+      height: 200px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div id="config">
+    <p>Stimulus Duration: <input type="number" id="duration"></input></p>
+    <p>ITI: <input type="number" id="iti"></input></p>
+    <p>Trials: <input type="number" id="trials"></input></p>
+    <button id="start">Start</button>
+  </div>
+</body>
+<script>
+
+// transition-timing-function: step-end
+// transition-delay: 0.5s
+
+var duration = 0;
+var iti = 0;
+var trials = 0;
+
+document.querySelector('#start').addEventListener('click', function(){
+  duration = document.querySelector('#duration').value;
+  iti = document.querySelector('#iti').value;
+  trials = document.querySelector('#trials').value;
+
+  document.querySelector('#config').remove();
+
+  setTimeout(next, 1000);
+});
+
+function next() {
+  var html = '<style id="anim">@keyframes display { from { opacity: 1; } to { opacity: 0; } }</style>';
+  html += "<div id='stim' style='animation-name: display; animation-fill-mode:forwards; animation-duration:"+duration+"ms; animation-timing-function: step-end;'></div>";
+  document.querySelector('body').innerHTML = html;
+
+  document.querySelector('#stim').addEventListener('animationend', function(){
+    trials--;
+    if(trials == 0){
+      done();
+    } else {
+      setTimeout(next, iti);
+    }
+  });
+}
+
+function done(){
+  document.querySelector('html').style.height = "calc(100vh - 60px)";
+  document.querySelector('html').style.borderWidth = "30px";
+  document.querySelector('html').style.borderColor = "green";
+  document.querySelector('html').style.borderStyle = "solid";
+}
+
+</script>
+</html>
