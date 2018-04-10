@@ -1,0 +1,39 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+library(readr)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+```
+
+Load the data files
+
+```{r message=FALSE, warning=FALSE}
+data.set.timeout <- read_tsv('data/setTimeout.txt') %>% select(c('Opto 3 Onset','Opto 3 Offset'))
+data.css.animation <- read_tsv('data/cssAnimation.txt') %>% select(c('Opto 3 Onset', 'Opto 3 Offset'))
+```
+
+Our stimuli are offset TO onset, not onset TO offset. Recalculate to get this.
+
+```{r}
+data.set.timeout.calc <- data.set.timeout %>% mutate(duration = `Opto 3 Onset` - lag(`Opto 3 Offset`)) %>%
+  filter(!is.na(duration)) %>% mutate(type="setTimeout") %>% select(type, duration) 
+data.css.animation.calc <- data.css.animation %>% mutate(duration = `Opto 3 Onset` - lag(`Opto 3 Offset`)) %>%
+  filter(!is.na(duration)) %>% mutate(type="cssAnimation") %>% select(type, duration) 
+
+data.all <- rbind(data.set.timeout.calc, data.css.animation.calc)
+```
+
+Duration Counts
+```{r}
+data.all %>% group_by(type,duration) %>% summarize(count=n())
+```
+
+Visualizing distributions
+```{r}
+ggplot(data.all, aes(x=duration))+geom_histogram(bins=4)+facet_grid(type~.)
+```
