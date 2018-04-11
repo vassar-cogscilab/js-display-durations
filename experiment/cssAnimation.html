@@ -2,13 +2,17 @@
 <html>
 <head>
   <style>
+    html {
+      background-color: black;
+      color: white;
+    }
     #stim {
       position: absolute;
       top: calc(50% - 100px);
       left: calc(50% - 100px);
       width: 200px;
       height: 200px;
-      background-color: black;
+      background-color: white;
     }
     #config {
       position: absolute;
@@ -19,7 +23,7 @@
       border: 1px solid #ccc;
       text-align: center;
     }
-    @keyframes hide { from { visibility: visible; } to { visibility: hidden; } }
+    @keyframes hide { from { opacity: 1; } to { opacity: 0; } }
   </style>
 </head>
 <body>
@@ -47,7 +51,7 @@ document.querySelector('#start').addEventListener('click', function(){
 });
 
 function next() {
-  var html = "<div id='stim' style='animation-name: hide; animation-fill-mode:forwards; animation-duration:"+duration+"ms; animation-timing-function: step-end;'></div>";
+  var html = "<div id='stim' style='will-transform: opacity; animation-name: hide; animation-fill-mode:forwards; animation-duration:"+duration+"ms; animation-timing-function: step-end;'></div>";
   document.querySelector('body').innerHTML = html;
 
   document.querySelector('#stim').addEventListener('animationend', function(){
