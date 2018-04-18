@@ -8,32 +8,54 @@ library(readr)
 library(tidyr)
 library(dplyr)
 library(ggplot2)
+library(stringr)
 ```
 
 Load the data files
 
 ```{r message=FALSE, warning=FALSE}
-data.set.timeout <- read_tsv('data/setTimeout.txt') %>% select(c('Opto 3 Onset','Opto 3 Offset'))
-data.css.animation <- read_tsv('data/cssAnimation.txt') %>% select(c('Opto 3 Onset', 'Opto 3 Offset'))
+data.all <- NA
+data.files <- dir('data')
+for(f in data.files){
+  method <- str_split(f, "_")[[1]][1]
+  duration <- as.numeric(str_sub(str_split(f,"_")[[1]][2],start=1,end=-5))
+  data.this <- read_tsv(paste0('data/', f)) %>% 
+    select(c('Opto 3 Onset', 'Opto 3 Offset')) %>%
+    mutate(method=method, duration=duration) %>%
+    slice(2:101)
+  if(is.na(data.all)){
+    data.all <- data.this
+  } else {
+    data.all <- rbind(data.all, data.this)
+  }
+}
 ```
 
-Our stimuli are offset TO onset, not onset TO offset. Recalculate to get this.
-
+Calculate measured duration
 ```{r}
-data.set.timeout.calc <- data.set.timeout %>% mutate(duration = `Opto 3 Onset` - lag(`Opto 3 Offset`)) %>%
-  filter(!is.na(duration)) %>% mutate(type="setTimeout") %>% select(type, duration) 
-data.css.animation.calc <- data.css.animation %>% mutate(duration = `Opto 3 Onset` - lag(`Opto 3 Offset`)) %>%
-  filter(!is.na(duration)) %>% mutate(type="cssAnimation") %>% select(type, duration) 
-
-data.all <- rbind(data.set.timeout.calc, data.css.animation.calc)
+data.all <- data.all %>% mutate(obs.duration = `Opto 3 Offset` - `Opto 3 Onset`)
 ```
 
-Duration Counts
+Summarize data
 ```{r}
-data.all %>% group_by(type,duration) %>% summarize(count=n())
+data.summary <- data.all %>% 
+  group_by(method, duration) %>% 
+  summarize(mean.obs = mean(obs.duration), sd.obs=sd(obs.duration))
 ```
 
-Visualizing distributions
+Plotting
 ```{r}
-ggplot(data.all, aes(x=duration))+geom_histogram(bins=4)+facet_grid(type~.)
+ggplot(data.summary, aes(x=duration, y=mean.obs, ymin=mean.obs-sd.obs, ymax=mean.obs+sd.obs, color=method))+
+  geom_abline(intercept=0,slope=1)+
+  geom_pointrange()+
+  theme_minimal()
+```
+
+
+Plotting, log scale
+```{r}
+ggplot(data.summary, aes(x=log(duration), y=log(mean.obs), ymin=log(mean.obs-sd.obs), ymax=log(mean.obs+sd.obs), color=method))+
+  geom_abline(intercept=0,slope=1)+
+  geom_pointrange()+
+  theme_minimal()
 ```
