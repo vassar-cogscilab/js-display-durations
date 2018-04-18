@@ -12,7 +12,6 @@ library(stringr)
 ```
 
 Load the data files
-
 ```{r message=FALSE, warning=FALSE}
 data.all <- NA
 data.files <- dir('data')
@@ -31,31 +30,31 @@ for(f in data.files){
 }
 ```
 
-Calculate measured duration
+Calculate measured duration, frame durations
 ```{r}
-data.all <- data.all %>% mutate(obs.duration = `Opto 3 Offset` - `Opto 3 Onset`)
+frame.rate <- 1000/60
+data.all <- data.all %>% 
+  mutate(obs.duration = `Opto 3 Offset` - `Opto 3 Onset`) %>% 
+  mutate(frames = round(obs.duration / frame.rate), desired.frames = round(duration / frame.rate))
 ```
 
-Summarize data
+Calculate errors
 ```{r}
-data.summary <- data.all %>% 
-  group_by(method, duration) %>% 
-  summarize(mean.obs = mean(obs.duration), sd.obs=sd(obs.duration))
+data.all <- data.all %>%
+  mutate(frame.error = frames - desired.frames)
+
+error.summary <- data.all %>% group_by(method, desired.frames, frame.error) %>% summarize(count = n())
+
+error.summary
 ```
 
-Plotting
 ```{r}
-ggplot(data.summary, aes(x=duration, y=mean.obs, ymin=mean.obs-sd.obs, ymax=mean.obs+sd.obs, color=method))+
-  geom_abline(intercept=0,slope=1)+
-  geom_pointrange()+
-  theme_minimal()
-```
-
-
-Plotting, log scale
-```{r}
-ggplot(data.summary, aes(x=log(duration), y=log(mean.obs), ymin=log(mean.obs-sd.obs), ymax=log(mean.obs+sd.obs), color=method))+
-  geom_abline(intercept=0,slope=1)+
-  geom_pointrange()+
-  theme_minimal()
+ggplot(error.summary, aes(x=frame.error, y=count, fill=method))+
+  scale_fill_brewer(type="qual", palette = "Set1", name="Method")+
+  geom_vline(xintercept = 0, color="grey50")+
+  geom_bar(stat='identity') +
+  labs(x="Error in displayed frame count", y="Count")+
+  facet_grid(method ~ desired.frames)+
+  theme_minimal()+
+  theme(panel.grid=element_blank())
 ```
