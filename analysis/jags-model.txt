@@ -1,5 +1,20 @@
 model {
   for(i in 1:ndata){
-    y[i] <- 
+    y[i] ~ dcat(pr[method[i], 1:5])
+  }
+  
+  thresh[1] <- -1.5
+  thresh[2] ~ dnorm(-.5, 1/2^2)
+  thresh[3] ~ dnorm(0.5, 1/2^2)
+  thresh[4] <- 1.5
+  
+  for(i in 1:4){
+   pr[i, 1] <- pnorm(thresh[1], mu[i], 1 / sigma[i]^2)
+    for(k in 2:4){
+      pr[i,k] <- max(0, pnorm(thresh[k], mu[i], 1 / sigma[i]^2) - pnorm(thresh[k-1], mu[i], 1/sigma[i]^2))
+    }
+    pr[i,5] <- 1 - pnorm(thresh[4], mu[i], 1/sigma[i]^2)
+    mu[i] ~ dnorm(0, 1 / 5^2)
+    sigma[i] ~ dgamma(2, 1/2)
   }
 }
