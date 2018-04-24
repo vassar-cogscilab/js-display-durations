@@ -56,7 +56,6 @@ var frame_times = new Array(fps_est_n_trials);
 var frame_diffs = new Array(fps_est_n_trials-1);
 
 function estimateFramesPerSec(timestamp, callback) {
-  document.querySelector('#wait').style.visibility = 'visible';
   // from http://jsfiddle.net/bn8kbw3t/
   if (frame_count > 0) {
     var last_time = frame_times[frame_count-1];
@@ -67,6 +66,7 @@ function estimateFramesPerSec(timestamp, callback) {
     var sum = frame_diffs.reduce(function(a, b) {return a + b;});
     var avg = sum / (frame_diffs.length);
     estimated_frame_duration = avg;
+    console.log(estimated_frame_duration);
     document.querySelector('#wait').remove();
     callback();
   } else {
@@ -81,7 +81,7 @@ document.querySelector('#start').addEventListener('click', function(){
   trials = document.querySelector('#trials').value;
 
   document.querySelector('#config').remove();
-
+  document.querySelector('#wait').style.visibility = 'visible';
   window.requestAnimationFrame(function(timestamp) {
     estimateFramesPerSec(timestamp, next);
   });
