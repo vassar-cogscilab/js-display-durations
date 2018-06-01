@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    html {
+      background-color: black;
+      color: white;
+    }
+    #stim {
+      position: absolute;
+      top: calc(50% - 100px);
+      left: calc(50% - 100px);
+      width: 200px;
+      height: 200px;
+      visibility: hidden;
+      background-color: white;
+    }
+    #config {
+      position: absolute;
+      top: 50px;
+      left: calc(50% - 200px);
+      width: 400px;
+      height: 200px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    #wait {
+      position: absolute;
+      top: 50px;
+      left: calc(50% - 200px);
+      width: 400px;
+      text-align: center;
+      visibility: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div id="config">
+    <p>Stimulus Duration: <input type="number" id="duration"></input></p>
+    <p>ITI: <input type="number" id="iti"></input></p>
+    <p>Trials: <input type="number" id="trials"></input></p>
+    <button id="start">Start</button>
+  </div>
+  <div id="wait"><p>Calculating frame rate. Please wait...</p></div>
+  <div id="stim"></div>
+</body>
+<script>
+
+var duration = 0;
+var iti = 0;
+var trials = 0;
+var frame_count = 0;
+var estimated_frame_duration;
+var fps_est_n_trials = 1000;
+var frame_times = new Array(fps_est_n_trials);
+var frame_diffs = new Array(fps_est_n_trials-1);
+// lower and upper limits on calculated frame duration to be considered 60 Hz (16.67ms)
+var frame_dur_lower_60Hz = 15.67;
+var frame_dur_upper_60Hz = 17.67;
+
+var data = [];
+
+document.querySelector('#start').addEventListener('click', function(){
+  duration = document.querySelector('#duration').value;
+  iti = document.querySelector('#iti').value;
+  trials = document.querySelector('#trials').value;
+
+  document.querySelector('#config').remove();
+
+  estimated_frame_duration = 16.67;
+  console.log("assume 60 Hz, quantize and use frame counting");
+
+  next();
+});
+
+function hideStim() {
+
+  if (typeof rAF_reference !== 'undefined') {
+    window.cancelAnimationFrame(rAF_reference);
+  }
+  document.querySelector('#stim').style.visibility = 'hidden';
+
+  trials--;
+  if (trials === 0) {
+    done();
+  } else {
+    setTimeout(next, iti);
+  }
+}
+
+function checkForTimeouts(timestamp, intended_delay, intended_frame_count, event_fn) {
+  var curr_delay = timestamp - start_time;
+  var frame_diff = frame_count - intended_frame_count;
+  var time_diff = curr_delay - intended_delay;
+  if ((frame_diff >= 0 && time_diff >= -estimated_frame_duration) || (frame_diff >= -1 && time_diff >= 0)) {
+    data.push({
+      curr_delay,
+      intended_delay,
+      frame_count,
+      intended_frame_count
+    })
+    event_fn();
+  } else {
+    // not enough time has elapsed, so call rAF with this function as the callback again
+    rAF_reference = window.requestAnimationFrame(function(timestamp) {
+      frame_count++;
+      checkForTimeouts(timestamp, intended_delay, intended_frame_count, event_fn);
+    });
+  }
+}
+
+function next() {
+  frame_count = 0;
+  var lower_dur = Math.floor(duration/estimated_frame_duration) * estimated_frame_duration;
+  var upper_dur = Math.ceil(duration/estimated_frame_duration) * estimated_frame_duration;
+  var duration_adj;
+  if ((duration - lower_dur) <= (estimated_frame_duration/2)) {
+    duration_adj = lower_dur;
+  } else {
+    duration_adj = upper_dur;
+  }
+  var target_frame_count = duration_adj/estimated_frame_duration;
+  window.requestAnimationFrame(function(timestamp) {
+    document.querySelector('#stim').style.visibility = 'visible';
+    start_time = performance.now();
+    var rAF_reference = window.requestAnimationFrame(function(timestamp) {
+      frame_count++;
+      checkForTimeouts(timestamp, duration_adj - 5, target_frame_count, hideStim);
+    });
+  });
+}
+
+function done() {
+  document.querySelector('html').style.height = "calc(100vh - 60px)";
+  document.querySelector('html').style.borderWidth = "30px";
+  document.querySelector('html').style.borderColor = "green";
+  document.querySelector('html').style.borderStyle = "solid";
+}
+
+</script>
+</html>
