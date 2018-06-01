@@ -51,7 +51,7 @@ var iti = 0;
 var trials = 0;
 var frame_count = 0;
 var estimated_frame_duration;
-var fps_est_n_trials = 1000;
+var fps_est_n_trials = 60;
 var frame_times = new Array(fps_est_n_trials);
 var frame_diffs = new Array(fps_est_n_trials-1);
 
@@ -66,6 +66,7 @@ function estimateFramesPerSec(timestamp, callback) {
     var sum = frame_diffs.reduce(function(a, b) {return a + b;});
     var avg = sum / (frame_diffs.length);
     estimated_frame_duration = avg;
+    console.log(frame_diffs);
     console.log(estimated_frame_duration);
     document.querySelector('#wait').remove();
     callback();
@@ -104,7 +105,9 @@ function hideStim() {
 function checkForTimeouts(timestamp, intended_delay, event_fn) {
   var curr_delay = timestamp - start_time; // duration in positive ms of stim so far
   var time_diff = intended_delay - curr_delay; // remaining time in pos ms.
+  console.log(curr_delay);
   if (time_diff <= estimated_frame_duration) {
+    console.log(time_diff);
     event_fn();
   } else {
     rAF_reference = window.requestAnimationFrame(function(timestamp) {
@@ -114,9 +117,9 @@ function checkForTimeouts(timestamp, intended_delay, event_fn) {
 }
 
 function next() {
-  window.requestAnimationFrame(function() {
+  window.requestAnimationFrame(function(ts) {
     document.querySelector('#stim').style.visibility = 'visible';
-    start_time = performance.now();
+    start_time = ts;
     var rAF_reference = window.requestAnimationFrame(function(timestamp) {
       checkForTimeouts(timestamp, duration, hideStim);
     });

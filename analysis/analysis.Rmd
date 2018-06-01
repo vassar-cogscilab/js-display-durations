@@ -48,7 +48,7 @@ error.summary <- data.all %>% group_by(method, desired.frames, frame.error) %>% 
 error.summary
 ```
 
-```{r}
+```{r fig.height=12, fig.width=12}
 ggplot(error.summary, aes(x=frame.error, y=count, fill=method))+
   scale_fill_brewer(type="qual", palette = "Set1", name="Method")+
   geom_vline(xintercept = 0, color="grey50")+
