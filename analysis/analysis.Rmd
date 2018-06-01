@@ -14,7 +14,7 @@ library(stringr)
 Load the data files
 ```{r message=FALSE, warning=FALSE}
 data.all <- NA
-data.files <- dir('data')
+data.files <- dir('data', pattern=".txt") 
 for(f in data.files){
   method <- str_split(f, "_")[[1]][1]
   duration <- as.numeric(str_sub(str_split(f,"_")[[1]][2],start=1,end=-5))
