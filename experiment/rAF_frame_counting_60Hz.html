@@ -92,13 +92,14 @@ function checkForTimeouts(timestamp, intended_delay, intended_frame_count, event
   var curr_delay = timestamp - start_time;
   var frame_diff = frame_count - intended_frame_count;
   var time_diff = curr_delay - intended_delay;
-  if ((frame_diff >= 0 && time_diff >= -estimated_frame_duration) || (frame_diff >= -1 && time_diff >= 0)) {
+  var time_diff_threshold = -(intended_delay - ((intended_frame_count-1)*estimated_frame_duration))/2;
+  if ((frame_diff >= 0 && time_diff >= time_diff_threshold) || (frame_diff >= -1 && time_diff >= 0)) {
     data.push({
       curr_delay,
       intended_delay,
       frame_count,
       intended_frame_count
-    })
+    });
     event_fn();
   } else {
     // not enough time has elapsed, so call rAF with this function as the callback again
@@ -121,10 +122,10 @@ function next() {
   }
   var target_frame_count = duration_adj/estimated_frame_duration;
   window.requestAnimationFrame(function(timestamp) {
-    document.querySelector('#stim').style.visibility = 'visible';
-    start_time = performance.now();
+    // 1st rAF call now just used to set up stim display in next call, due to timing variability for 1st call
     var rAF_reference = window.requestAnimationFrame(function(timestamp) {
-      frame_count++;
+      document.querySelector('#stim').style.visibility = 'visible';
+      start_time = performance.now();
       checkForTimeouts(timestamp, duration_adj - 5, target_frame_count, hideStim);
     });
   });
