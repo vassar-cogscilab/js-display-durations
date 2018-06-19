@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="jspsych/jspsych.js"></script>
+        <script src="jspsych/plugins/jspsych-html-button-response.js"></script>
+        <script src="jspsych/plugins/jspsych-html-keyboard-response.js"></script>
+        <script src="jspsych/plugins/jspsych-survey-multi-choice.js"></script>
+        <script src="jspsych/plugins/jspsych-survey-text.js"></script>
+        <script src="custom_plugins/jspsych-estimate-refresh-rate.js"></script>
+        <link rel="stylesheet" href="jspsych/css/jspsych.css"></link>
+    </head>
+    <body>
+    </body>
+    <script>
+        jsPsych.data.addProperties({
+            userAgent: navigator.userAgent
+        })
+
+        var timeline = [];
+
+        var welcome = {
+            type: 'html-button-response',
+            stimulus: '<div style="width: 600px;"><p>Hi, and thanks for participating!</p><p>The purpose of this task is to measure the refresh rate of your screen.</p>'+
+                '<p>We are interested in gathering this data because it will help researchers who conduct online experiments develop '+
+                'better ways of displaying content for a precise duration.</p>'+
+                '<p>To help us get accurate data, it is important that you don\'t do anything else on the computer while the task is '+
+                'running on the next screen. It will run for 30 seconds. Then we will ask you two quick questions about the device you are using to complete the study.</p></div>',
+            choices: ['Start the task!']
+        }
+
+        timeline.push(welcome);
+
+        var refresh = {
+            type: 'estimate-refresh-rate',
+            trial_duration: 3000
+        }
+
+        timeline.push(refresh);
+
+        var survey_1 = {
+            type: 'survey-multi-choice',
+            questions: [{
+                prompt: 'What kind of device are you using to complete this task?',
+                options: ['Desktop', 'Laptop', 'Tablet', 'Phone'],
+            }],
+            preamble: '<p>Almost done! Just two quick questions.</p>'
+        }
+        timeline.push(survey_1);
+
+        var survey_2 = {
+            type: 'survey-text',
+            questions: [{prompt: 'If you know the specific make (e.g., Apple, Motorola) and model (e.g., MacBook Pro, Moto G6) of your device, please enter it here.'}]
+        }
+        timeline.push(survey_2)
+
+        var debrief = {
+            type: 'html-keyboard-response',
+            stimulus: '<div style="width: 600px;"><p>Thanks! That\'s the end of the task. Clicking the link below will return you to Prolific and register the completion of the task. You do not need a completion code.</p>'+
+                '<a href="#">Finish and return to Prolific.</a></div>',
+            choices: jsPsych.NO_KEYS
+        }
+        timeline.push(debrief);
+
+        jsPsych.init({timeline: timeline})
+    </script>
+</html>
