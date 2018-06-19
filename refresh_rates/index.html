@@ -13,8 +13,14 @@
     <body>
     </body>
     <script>
+
+        var prolific_pid = jsPsych.data.getURLVariable('prolific_pid');
+        var session_id = jsPsych.data.getURLVariable('session_id');
+
         jsPsych.data.addProperties({
-            userAgent: navigator.userAgent
+            useragent: navigator.userAgent,
+            prolific_pid,
+            session_id
         })
 
         var timeline = [];
