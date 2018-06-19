@@ -20,13 +20,17 @@ jsPsych.plugins["estimate-refresh-rate"] = (function() {
 
 
     var trial_data = {
-      frames_diff: []
+      frames_diff: [],
+      frames_raw_inside: [],
+      frames_raw_fn_param: []
     }
 
     var last = null;
 
-    function next(){
+    function next(timestamp){
       var now = performance.now();
+      trial_data.frames_raw_inside = now;
+      trial_data.frames_raw_fn_param.push(timestamp);
       if(last !== null){
         trial_data.frames_diff.push(now - last);
       }
