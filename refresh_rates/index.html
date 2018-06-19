@@ -31,7 +31,8 @@
                 '<p>We are interested in gathering this data because it will help researchers who conduct online experiments develop '+
                 'better ways of displaying content for a precise duration.</p>'+
                 '<p>To help us get accurate data, it is important that you don\'t do anything else on the computer while the task is '+
-                'running on the next screen. It will run for 5 seconds. Then we will ask you two quick questions about the device you are using to complete the study.</p></div>',
+                'running on the next screen. It will run for 30 seconds. You don\'t need to do anything during this time. Then we will ask you two quick questions about the device you are using to complete the study.</p>'+
+                '<p>By clicking the button below, you acknowledge that you understand the task and give consent to participate in this research. You are free to stop at any time by closing your browser.</p></div>',
             choices: ['Start the task!']
         }
 
@@ -39,7 +40,7 @@
 
         var refresh = {
             type: 'estimate-refresh-rate',
-            trial_duration: 5000
+            trial_duration: 30000
         }
 
         timeline.push(refresh);
