@@ -8,6 +8,7 @@
         <script src="jspsych/plugins/jspsych-survey-text.js"></script>
         <script src="custom_plugins/jspsych-estimate-refresh-rate.js"></script>
         <link rel="stylesheet" href="jspsych/css/jspsych.css"></link>
+        <script src="js/serverComm.js"></script>
     </head>
     <body>
     </body>
@@ -57,7 +58,10 @@
             type: 'html-keyboard-response',
             stimulus: '<div style="width: 600px;"><p>Thanks! That\'s the end of the task. Clicking the link below will return you to Prolific and register the completion of the task. You do not need a completion code.</p>'+
                 '<a href="#">Finish and return to Prolific.</a></div>',
-            choices: jsPsych.NO_KEYS
+            choices: jsPsych.NO_KEYS,
+            on_start: function(){
+                serverComm.save_data(jsPsych.data.get().values());
+            }
         }
         timeline.push(debrief);
 
