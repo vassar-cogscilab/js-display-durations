@@ -50,6 +50,9 @@ jsPsych.plugins["estimate-refresh-rate"] = (function() {
     function end(){
       display_element.innerHTML = "";
       // end trial
+      trial_data.frames_diff = JSON.stringify(trial_data.frames_diff);
+      trial_data.frames_raw_inside = JSON.stringify(trial_data.frames_raw_inside);
+      trial_data.frames_raw_fn_param = JSON.stringify(trial_data.frames_raw_fn_param);
       jsPsych.finishTrial(trial_data);  
     }
   };
