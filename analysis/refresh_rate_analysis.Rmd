@@ -61,3 +61,29 @@ ggplot(frame.diff.2, aes(x=index, y=estimated.frame.rate, group=subject))+
   labs(x="Number of Frames Recorded", y="Estimated Frame Rate (Hz)")+
   theme_bw()
 ```
+
+## Procedure for estimating variance
+
+1. Sample *n* random time points, calculate estimated frame rate.
+2. Repeat *t* times.
+3. Calculate variance in estimated frame rates among *t* samples.
+4. Repeat for *n* = 1 to *max*
+5. Repeat for all subjects
+
+```{r}
+t.reps <- 1000
+
+generate.variance.estimate <- function(frames, n.min, n.max, t.reps){
+  output <- data.frame(number.of.frames=n.min:n.max)
+  variance.estimate <- sapply(output$number.of.frames, function(n){
+    var(replicate(t.reps, {mean(sample(frames,n, replace=T))}))
+  })
+  output$variance <- variance.estimate
+  return(output)
+}
+
+test.frames <- (combined.data %>% filter(frame.type=="frames.diff", subject==468))$value
+subject.var.est <- generate.variance.estimate(test.frames, 1, 500, 1000)
+plot(subject.var.est$variance)
+```
+
