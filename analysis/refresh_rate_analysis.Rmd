@@ -1,0 +1,63 @@
+---
+title: "Measuring Refresh Rates"
+output: html_notebook
+---
+
+
+
+```{r}
+library(readr)
+library(dplyr)
+library(jsonlite)
+library(ggplot2)
+
+all.data <- read_csv2('data/refresh_rate_data.csv')
+```
+
+```{r message=FALSE, warning=FALSE}
+refresh.data <- all.data %>% filter(trial_type == "estimate-refresh-rate")
+subjects <- unique(refresh.data$prolific_pid)
+combined.data <- NA
+for(s in subjects){
+  frames.diff <- fromJSON((refresh.data %>% filter(prolific_pid == s))$frames_diff[1])
+  frames.raw.inside <- fromJSON((refresh.data %>% filter(prolific_pid == s))$frames_raw_inside[1])
+  frames.raw.fn <- fromJSON((refresh.data %>% filter(prolific_pid == s))$frames_raw_fn_param[1])
+  frame.type <- c(
+    rep('frames.diff', length(frames.diff)),
+    rep('frames.raw.inside', length(frames.raw.inside)),
+    rep('frames.raw.fn', length(frames.raw.fn))
+  )
+  subject.data <- data.frame(
+    frame.type,
+    index=c(1:length(frames.diff), 1:length(frames.raw.inside), 1:length(frames.raw.fn)),
+    value=c(frames.diff, frames.raw.fn, frames.raw.inside)
+  )
+  subject.data$subject <- s
+  if(is.na(combined.data)){
+    combined.data <- subject.data
+  } else {
+    combined.data <- rbind(combined.data, subject.data)
+  }
+}
+```
+
+
+
+```{r}
+cumulative.estimate <- combined.data %>% filter(frame.type=="frames.diff") %>% group_by(subject) %>% mutate(estimated.frame.rate = 1000/cummean(value))
+ggplot(cumulative.estimate, aes(x=index, y=estimated.frame.rate, group=subject))+
+  geom_line()+
+  labs(x="Number of Frames Recorded", y="Estimated Frame Rate (Hz)")+
+  theme_bw()
+
+```
+
+
+```{r}
+frame.diff.2 <- combined.data %>% filter(frame.type=="frames.raw.fn") %>% mutate(diff=value-lag(value)) %>% filter(index > 1) %>%
+  group_by(subject) %>% mutate(estimated.frame.rate = 1000/cummean(diff))
+ggplot(frame.diff.2, aes(x=index, y=estimated.frame.rate, group=subject))+
+  geom_line()+
+  labs(x="Number of Frames Recorded", y="Estimated Frame Rate (Hz)")+
+  theme_bw()
+```
