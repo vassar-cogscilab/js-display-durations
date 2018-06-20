@@ -64,7 +64,7 @@
         var debrief = {
             type: 'html-keyboard-response',
             stimulus: '<div style="width: 600px;"><p>Thanks! That\'s the end of the task. Clicking the link below will return you to Prolific and register the completion of the task. You do not need a completion code.</p>'+
-                '<a href="#">Finish and return to Prolific.</a></div>',
+                '<a href="https://app.prolific.ac/submissions/complete?cc=6PTT5ACG">Finish and return to Prolific.</a></div>',
             choices: jsPsych.NO_KEYS,
             on_start: function(){
                 serverComm.save_data(jsPsych.data.get().values());
