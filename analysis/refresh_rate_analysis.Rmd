@@ -41,7 +41,10 @@ for(s in subjects){
 }
 ```
 
-
+```{r}
+final.estimate <- combined.data %>% filter(frame.type=="frames.diff") %>% group_by(subject) %>% summarize(frame.rate = 1000/mean(value))
+ggplot(final.estimate, aes(x=frame.rate))+geom_histogram(binwidth=1)
+```
 
 ```{r}
 cumulative.estimate <- combined.data %>% filter(frame.type=="frames.diff") %>% group_by(subject) %>% mutate(estimated.frame.rate = 1000/cummean(value))
