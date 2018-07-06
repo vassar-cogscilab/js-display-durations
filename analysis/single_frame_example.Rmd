@@ -1,0 +1,31 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+library(readr)
+library(dplyr)
+library(ggplot2)
+
+data.all <- read_csv('data/single-frame/HI RES.csv')
+
+data.filter <- data.all %>% slice(2:n()) %>% select('X','CH1') %>% mutate(mv = 1000 * as.numeric(as.character(CH1)), ms = as.numeric(X) * 0.02) %>% select('ms','mv')
+
+
+thresholds <- data.frame(threshold = c(15,30,45,60,75,90)) %>% 
+  rowwise() %>% 
+  mutate(start = data.filter$ms[min(which(data.filter$mv >= threshold))]) %>%
+  mutate(end = data.filter$ms[max(which(data.filter$mv >= threshold))]) %>%
+  ungroup() %>%
+  mutate(duration = paste0(end-start,"ms"))
+
+ggplot(data.filter, aes(x=ms, y=mv))+
+  geom_line()+
+  geom_segment(data=thresholds, aes(x=start, xend=end, y=threshold, yend=threshold), color="blue")+
+  geom_text(data=thresholds, aes(x=15,y=threshold,label=duration), hjust="left",nudge_y=3)+
+  labs(x="Milliseconds", y="Photodiode voltage (mV)")+
+  theme_bw()
+```
+
