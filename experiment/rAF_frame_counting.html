@@ -1,29 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <link rel="stylesheet" href="common.css" />
   <style>
-    html {
-      background-color: black;
-      color: white;
-    }
-    #stim {
-      position: absolute;
-      top: calc(50% - 100px);
-      left: calc(50% - 100px);
-      width: 200px;
-      height: 200px;
-      visibility: hidden;
-      background-color: white;
-    }
-    #config {
-      position: absolute;
-      top: 50px;
-      left: calc(50% - 200px);
-      width: 400px;
-      height: 200px;
-      border: 1px solid #ccc;
-      text-align: center;
-    }
     #wait {
       position: absolute;
       top: 50px;
@@ -34,6 +13,7 @@
     }
   </style>
 </head>
+
 <body>
   <div id="config">
     <p>Stimulus Duration: <input type="number" id="duration"></input></p>
@@ -42,38 +22,13 @@
     <button id="start">Start</button>
   </div>
   <div id="wait"><p>Calculating frame rate. Please wait...</p></div>
-  <div id="stim"></div>
 </body>
+
 <script>
 
 var duration = 0;
 var iti = 0;
 var trials = 0;
-var frame_count = 0;
-var estimated_frame_duration;
-var fps_est_n_trials = 1000;
-var frame_times = new Array(fps_est_n_trials);
-var frame_diffs = new Array(fps_est_n_trials-1);
-
-function estimateFramesPerSec(timestamp, callback) {      
-  document.querySelector('#wait').style.visibility = 'visible';
-  // from http://jsfiddle.net/bn8kbw3t/
-  if (frame_count > 0) {
-    var last_time = frame_times[frame_count-1];
-    frame_diffs[frame_count-1] = timestamp - last_time; 
-  }
-  frame_times[frame_count] = timestamp;
-  if (frame_count == fps_est_n_trials) {
-    var sum = frame_diffs.reduce(function(a, b) {return a + b;});
-    var avg = sum / (frame_diffs.length);
-    estimated_frame_duration = avg;
-    document.querySelector('#wait').remove();
-    callback();
-  } else {
-    frame_count++;
-    window.requestAnimationFrame(function(timestamp) {estimateFramesPerSec(timestamp, callback);});
-  }
-}
 
 document.querySelector('#start').addEventListener('click', function(){
   duration = document.querySelector('#duration').value;
