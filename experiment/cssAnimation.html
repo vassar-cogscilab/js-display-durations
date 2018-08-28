@@ -14,6 +14,7 @@
     <p>Trials: <input type="number" id="trials"></input></p>
     <button id="start">Start</button>
   </div>
+  <div id="target"></div>
 </body>
 
 <script>
@@ -30,6 +31,7 @@ function beginExperiment(){
   trials = document.querySelector('#trials').value;
 
   document.querySelector('#config').remove();
+  document.querySelector('#target').remove();
 
   setTimeout(startTrial, 1000);
 }

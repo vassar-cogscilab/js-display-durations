@@ -11,6 +11,7 @@
     <p>Trials: <input type="number" id="trials"></input></p>
     <button id="start">Start</button>
   </div>
+  <div id="target"></div>
 </body>
 
 <script>
@@ -27,9 +28,12 @@ function beginExperiment(){
   trials = document.querySelector('#trials').value;
 
   document.querySelector('#config').remove();
+  document.querySelector('#target').remove();
 
   setTimeout(startTrial, 1000);
 }
+
+var start_time;
 
 function startTrial() {
   // first call to rAF is only used to setup the next rAF call
@@ -43,7 +47,7 @@ function startTrial() {
       // record the start time 
       start_time = timestamp;
       // setup the next rAF call to check for timeouts.
-      window.requestAnimationFrame(checkForTimeouts);
+      window.requestAnimationFrame(checkForTimeout);
     });
   }); 
 }
@@ -52,9 +56,10 @@ function checkForTimeout(timestamp) {
   // check if the stimulus has been displayed for at least `duration` ms.
   var curr_duration = timestamp - start_time; 
   if (curr_duration >= duration) {
+    console.log(curr_duration);
     endTrial();
   } else {
-    window.requestAnimationFrame(checkForTimeouts);
+    window.requestAnimationFrame(checkForTimeout);
   }
 }
 
