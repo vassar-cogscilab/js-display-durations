@@ -32,15 +32,33 @@ function beginExperiment(){
 }
 
 function startTrial() {
-  // create the stimulus string to display
-  var html = '<div id="stim"></div>';
-  // add the stimulus to the document via .innerHTML property
-  document.querySelector('body').innerHTML = html;
-  // setup timeout function to execute later
-  setTimeout(endTrial, duration);
+  // first call to rAF is only used to setup the next rAF call
+  // this makes the timing of the second rAF much more consistent
+  window.requestAnimationFrame(function(){
+    window.requestAnimationFrame(function(timestamp) {
+      // create the stimulus string to display
+      var html = '<div id="stim"></div>';
+      // add the stimulus to the document via .innerHTML property
+      document.querySelector('body').innerHTML = html;
+      // record the start time 
+      start_time = timestamp;
+      // setup the next rAF call to check for timeouts.
+      window.requestAnimationFrame(checkForTimeouts);
+    });
+  }); 
 }
 
-function endTrial(){
+function checkForTimeout(timestamp) {
+  // check if the stimulus has been displayed for at least `duration` ms.
+  var curr_duration = timestamp - start_time; 
+  if (curr_duration >= duration) {
+    endTrial();
+  } else {
+    window.requestAnimationFrame(checkForTimeouts);
+  }
+}
+
+function endTrial() {
   // remove stimulus from display
   document.querySelector('#stim').remove();
   // check if there are more trials to do

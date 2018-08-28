@@ -1,31 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <link rel="stylesheet" href="common.css" />
   <style>
-    html {
-      background-color: black;
-      color: white;
-    }
-    #stim {
-      position: absolute;
-      top: calc(50% - 100px);
-      left: calc(50% - 100px);
-      width: 200px;
-      height: 200px;
-      background-color: white;
-    }
-    #config {
-      position: absolute;
-      top: 50px;
-      left: calc(50% - 200px);
-      width: 400px;
-      height: 200px;
-      border: 1px solid #ccc;
-      text-align: center;
-    }
     @keyframes hide { from { opacity: 1; } to { opacity: 0; } }
   </style>
 </head>
+
 <body>
   <div id="config">
     <p>Stimulus Duration: <input type="number" id="duration"></input></p>
@@ -34,37 +15,47 @@
     <button id="start">Start</button>
   </div>
 </body>
+
 <script>
 
 var duration = 0;
 var iti = 0;
 var trials = 0;
 
-document.querySelector('#start').addEventListener('click', function(){
+document.querySelector('#start').addEventListener('click', beginExperiment);
+
+function beginExperiment(){
   duration = document.querySelector('#duration').value;
   iti = document.querySelector('#iti').value;
   trials = document.querySelector('#trials').value;
 
   document.querySelector('#config').remove();
 
-  setTimeout(next, 1000);
-});
-
-function next() {
-  var html = "<div id='stim' style='will-transform: opacity; animation-name: hide; animation-fill-mode:forwards; animation-duration:"+duration+"ms; animation-timing-function: step-end;'></div>";
-  document.querySelector('body').innerHTML = html;
-
-  document.querySelector('#stim').addEventListener('animationend', function(){
-    trials--;
-    if(trials == 0){
-      done();
-    } else {
-      setTimeout(next, iti);
-    }
-  });
+  setTimeout(startTrial, 1000);
 }
 
-function done(){
+function startTrial() {
+  // create the stimulus string to display
+  var html = "<div id='stim' style='will-change: opacity; animation-name: hide; animation-fill-mode:forwards; animation-duration:"+duration+"ms; animation-timing-function: step-end;'></div>";
+  // add the stimulus to the document via the .innerHTML property
+  document.querySelector('body').innerHTML = html;
+  // animation will trigger automatically when element is added to the document
+  // next line sets up the even to trigger when animation is complete
+  document.querySelector('#stim').addEventListener('animationend', endTrial);
+}
+
+function endTrial(){
+  // check if there are more trials to do
+  // either run another trial or end the experiment
+  trials--;
+  if(trials == 0){
+    finishExperiment();
+  } else {
+    setTimeout(startTrial, iti);
+  }
+}
+
+function finishExperiment(){
   document.querySelector('html').style.height = "calc(100vh - 60px)";
   document.querySelector('html').style.borderWidth = "30px";
   document.querySelector('html').style.borderColor = "green";
