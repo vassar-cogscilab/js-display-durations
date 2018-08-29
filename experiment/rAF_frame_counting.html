@@ -29,69 +29,69 @@
 var duration = 0;
 var iti = 0;
 var trials = 0;
+var estimated_frame_duration = null;
+var frame_count;
+var target_frame_count;
 
-document.querySelector('#start').addEventListener('click', function(){
+document.querySelector('#start').addEventListener('click', beginExperiment);
+
+function beginExperiment(){
   duration = document.querySelector('#duration').value;
   iti = document.querySelector('#iti').value;
   trials = document.querySelector('#trials').value;
 
   document.querySelector('#config').remove();
-  
-  window.requestAnimationFrame(function(timestamp) {
-    estimateFramesPerSec(timestamp, next);
-  });
-});
-
-function hideStim() {
-  if (typeof rAF_reference !== 'undefined') {
-    window.cancelAnimationFrame(rAF_reference);
-  }
-  document.querySelector('#stim').style.visibility = 'hidden';
-
-  trials--;
-  if (trials === 0) {
-    done();
-  } else {
-    setTimeout(next, iti);
-  }
+  document.querySelector('#wait').style.visibility = 'visible';
+  estimate_frame_rate(function(frame_rate){
+    estimated_frame_duration = frame_rate;
+    document.querySelector('#wait').remove();
+    setTimeout(startTrial, 1000);
+  }, 5000, true);
 }
 
-function checkForTimeouts(timestamp, intended_delay, intended_frame_count, event_fn) {
-  var curr_delay = timestamp - start_time; 
-  var frame_diff = frame_count - intended_frame_count;
-  var time_diff = curr_delay - intended_delay;
-  if ((frame_diff >= 0 && time_diff >= -estimated_frame_duration) || (frame_diff >= -1 && time_diff >= 0)) {
-    event_fn();
-  } else {
-    rAF_reference = window.requestAnimationFrame(function(timestamp) {
-      frame_count++;
-      checkForTimeouts(timestamp, intended_delay, intended_frame_count, event_fn);
-    });
-  }
-}
-
-function next() {
+function startTrial() {
   frame_count = 0;
-  var lower_dur = Math.floor(duration/estimated_frame_duration) * estimated_frame_duration;
-  var upper_dur = Math.ceil(duration/estimated_frame_duration) * estimated_frame_duration;
-  var duration_adj;
-  if ((duration - lower_dur) <= (estimated_frame_duration/2)) {
-    duration_adj = lower_dur;
-  } else {
-    duration_adj = upper_dur;
-  }
-  var target_frame_count = duration_adj/estimated_frame_duration;
-  window.requestAnimationFrame(function(timestamp) {
-    document.querySelector('#stim').style.visibility = 'visible';
-    start_time = performance.now();
-    var rAF_reference = window.requestAnimationFrame(function(timestamp) {
-      frame_count++;
-      checkForTimeouts(timestamp, duration_adj - 5, target_frame_count, hideStim);
+  target_frame_count = Math.round(duration / estimated_frame_duration);
+  // first call to rAF is only used to setup the next rAF call
+  // this makes the timing of the second rAF much more consistent
+  window.requestAnimationFrame(function(){
+    window.requestAnimationFrame(function(timestamp) {
+      // create the stimulus string to display
+      var html = '<div id="stim"></div>';
+      // add the stimulus to the document via .innerHTML property
+      document.querySelector('body').innerHTML = html;
+      // record the start time 
+      start_time = timestamp;
+      // setup the next rAF call to check for timeouts.
+      window.requestAnimationFrame(checkForTimeout);
     });
   });  
 }
 
-function done() {
+
+function checkForTimeout(timestamp) {
+  frame_count++;
+  if(frame_count >= target_frame_count){
+    endTrial();
+  } else {
+    window.requestAnimationFrame(checkForTimeout);
+  }
+}
+
+function endTrial() {
+  // remove stimulus from display
+  document.querySelector('#stim').remove();
+  // check if there are more trials to do
+  // either run another trial or end the experiment
+  trials--;
+  if(trials == 0){
+    finishExperiment();
+  } else {
+    setTimeout(startTrial, iti);
+  }
+}
+
+function finishExperiment(){
   document.querySelector('html').style.height = "calc(100vh - 60px)";
   document.querySelector('html').style.borderWidth = "30px";
   document.querySelector('html').style.borderColor = "green";
