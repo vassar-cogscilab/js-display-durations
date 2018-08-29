@@ -1,6 +1,7 @@
 function estimate_frame_rate(callback, duration, trim){
     var last = null;
     var frames = [];
+    var start = performance.now();
 
     // skip first frame to get more consistent estimate
     window.requestAnimationFrame(function(){

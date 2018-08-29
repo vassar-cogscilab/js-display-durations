@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <script src="frame_rate_estimation.js"></script>
   <link rel="stylesheet" href="common.css" />
   <style>
     #wait {
@@ -21,6 +22,7 @@
     <p>Trials: <input type="number" id="trials"></input></p>
     <button id="start">Start</button>
   </div>
+  <div id="target"></div>
   <div id="wait"><p>Calculating frame rate. Please wait...</p></div>
 </body>
 
@@ -44,6 +46,7 @@ function beginExperiment(){
   document.querySelector('#wait').style.visibility = 'visible';
   estimate_frame_rate(function(frame_rate){
     estimated_frame_duration = frame_rate;
+    //console.log(estimated_frame_duration);
     document.querySelector('#wait').remove();
     setTimeout(startTrial, 1000);
   }, 5000, true);
@@ -52,6 +55,7 @@ function beginExperiment(){
 function startTrial() {
   frame_count = 0;
   target_frame_count = Math.round(duration / estimated_frame_duration);
+  //console.log(target_frame_count);
   // first call to rAF is only used to setup the next rAF call
   // this makes the timing of the second rAF much more consistent
   window.requestAnimationFrame(function(){
