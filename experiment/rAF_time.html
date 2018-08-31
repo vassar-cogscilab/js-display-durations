@@ -56,7 +56,7 @@ function checkForTimeout(timestamp) {
   // check if the stimulus has been displayed for at least `duration` ms.
   var curr_duration = timestamp - start_time; 
   if (curr_duration >= duration) {
-    console.log(curr_duration);
+    //console.log(curr_duration);
     endTrial();
   } else {
     window.requestAnimationFrame(checkForTimeout);
