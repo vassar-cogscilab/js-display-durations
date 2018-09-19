@@ -34,6 +34,8 @@ function beginExperiment(){
 }
 
 var start_time;
+var frame_time_estimate;
+var last_frame_time;
 
 function startTrial() {
   // first call to rAF is only used to setup the next rAF call
@@ -46,6 +48,9 @@ function startTrial() {
       document.querySelector('body').innerHTML = html;
       // record the start time 
       start_time = timestamp;
+      // reset the frame time estimate
+      frame_time_estimate = null;
+      last_frame_time = start_time;
       // setup the next rAF call to check for timeouts.
       window.requestAnimationFrame(checkForTimeout);
     });
@@ -53,9 +58,14 @@ function startTrial() {
 }
 
 function checkForTimeout(timestamp) {
-  // check if the stimulus has been displayed for at least `duration` ms.
-  var curr_duration = timestamp - start_time; 
-  if (curr_duration >= duration) {
+  // get the estimated length of a single frame
+  var frame_time_estimate = timestamp - last_frame_time;
+  // calculate an estimate of how long the stimulus has been on the screen
+  var curr_duration = timestamp - start_time;
+  // check if the current duration is at least as long as the intended duration
+  // minus half the estimated frame time. this helps avoid displaying the stimulus
+  // for one too many frames.
+  if (curr_duration >= duration - frame_time_estimate/2) {
     //console.log(curr_duration);
     endTrial();
   } else {
