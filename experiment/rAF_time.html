@@ -66,17 +66,17 @@ function checkForTimeout(timestamp) {
   // minus half the estimated frame time. this helps avoid displaying the stimulus
   // for one too many frames.
   if (curr_duration >= duration - frame_time_estimate/2) {
-    //console.log(curr_duration);
     endTrial();
   } else {
+    last_frame_time = timestamp;
     window.requestAnimationFrame(checkForTimeout);
   }
 }
 
 function endTrial() {
   // remove stimulus from display
-  document.querySelector('#stim').remove();
-  // check if there are more trials to do
+  document.querySelector('#stim').remove();  
+  // check if there are more trials to do;
   // either run another trial or end the experiment
   trials--;
   if(trials == 0){
