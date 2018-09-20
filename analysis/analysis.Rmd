@@ -11,17 +11,22 @@ library(ggplot2)
 library(stringr)
 ```
 
-Load the data files
+## Loading the data
+
+Each data file is read and added to a single data frame. Because the BBTK can record a small number (0, 1, or 2) of extra frames based on when recording is started relative to the timing of the screen events, we standardize the sampling here by throwing out the first `warmup` number of samples (50) and only sampling the next `samples` number (100). This gives us 100 samples from the middle of each run.
+
 ```{r message=FALSE, warning=FALSE}
 data.all <- NA
-data.files <- dir('data', pattern=".txt") 
+directory <- 'data/base_study'
+data.files <- dir(directory, pattern=".txt")
+warmup <- 50
+samples <- 100
 for(f in data.files){
-  method <- str_split(f, "_")[[1]][1]
-  duration <- as.numeric(str_sub(str_split(f,"_")[[1]][2],start=1,end=-5))
-  data.this <- read_tsv(paste0('data/', f)) %>% 
+  vars <- str_split(f, "_|\\.")[[1]]
+  data.this <- read_tsv(paste0(directory,"/", f)) %>% 
     select(c('Opto 3 Onset', 'Opto 3 Offset')) %>%
-    mutate(method=method, duration=duration) %>%
-    slice(2:101)
+    mutate(method=vars[1], system = vars[2], browser=vars[3], duration=as.numeric(vars[4])) %>%
+    slice((1+warmup):(warmup+samples))
   if(is.na(data.all)){
     data.all <- data.this
   } else {
@@ -30,23 +35,31 @@ for(f in data.files){
 }
 ```
 
-Calculate measured duration, frame durations
+
+We add columns that contain the duration of the stimulus as measured by the BBTK, a conversion of this duration to the number of frames that the stimulus was displayed, and the desired number of frames to display, and the error in the number of frames displayed.
+
 ```{r}
 frame.rate <- 1000/60
 data.all <- data.all %>% 
-  mutate(obs.duration = `Opto 3 Offset` - `Opto 3 Onset`) %>% 
-  mutate(frames = round(obs.duration / frame.rate), desired.frames = round(duration / frame.rate))
+  mutate(obs.duration = `Opto 3 Offset` - `Opto 3 Onset`, 
+         frames = round(obs.duration / frame.rate), 
+         desired.frames = round(duration / frame.rate),
+         frame.error = frames - desired.frames)
 ```
 
-Calculate errors
-```{r}
-data.all <- data.all %>%
-  mutate(frame.error = frames - desired.frames)
 
-error.summary <- data.all %>% group_by(method, desired.frames, frame.error) %>% summarize(count = n())
+## Summary of error for each condition.
+
+We calculate the number of presentations with particular frame errors (e.g., 1 frame too long, 1 frame too short) for each condition (method, browser, system combination).
+
+```{r}
+error.summary <- data.all %>% group_by(method, browser, system, desired.frames, frame.error) %>% summarize(count = n())
 
 error.summary
 ```
+
+
+This plot shows the frequency of different errors in each condition.
 
 ```{r fig.height=12, fig.width=12}
 ggplot(error.summary, aes(x=frame.error, y=count, fill=method))+
