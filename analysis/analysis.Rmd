@@ -16,13 +16,13 @@ library(purrr)
 
 ## Loading the data
 
-Each data file is read and added to a single data frame. Because the BBTK can record a small number (0, 1, or 2) of extra frames based on when recording is started relative to the timing of the screen events, we standardize the sampling here by throwing out the first `warmup` number of samples (50) and only sampling the next `samples` number (100). This gives us 100 samples from the middle of each run.
+Each data file is read and added to a single data frame. 
 
 ```{r message=FALSE, warning=FALSE}
 data.all <- NA
 directory <- 'data/base_study'
 data.files <- dir(directory, pattern=".txt")
-warmup <- 0
+warmup <- 0 # can throw out the first N samples, but we sorted out the problem that was necessitating this.
 samples <- 200
 for(f in data.files){
   vars <- str_split(f, "_|\\.")[[1]]
@@ -96,6 +96,7 @@ nested.error.summary <- error.summary %>% group_by(browser, system) %>% nest() %
 ```{r fig.height=12, fig.width=12}
 (nested.error.summary %>% filter(system == 'pc', browser == 'chrome'))$plot[[1]]
 ```
+
 ## Chrome, Linux
 
 ```{r fig.height=12, fig.width=12}
