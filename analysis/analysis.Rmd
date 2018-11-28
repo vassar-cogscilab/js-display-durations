@@ -1,6 +1,8 @@
 ---
 title: "R Notebook"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
 
 ```{r message=FALSE, warning=FALSE, paged.print=FALSE}
@@ -9,6 +11,7 @@ library(tidyr)
 library(dplyr)
 library(ggplot2)
 library(stringr)
+library(purrr)
 ```
 
 ## Loading the data
@@ -19,8 +22,8 @@ Each data file is read and added to a single data frame. Because the BBTK can re
 data.all <- NA
 directory <- 'data/base_study'
 data.files <- dir(directory, pattern=".txt")
-warmup <- 50
-samples <- 100
+warmup <- 0
+samples <- 200
 for(f in data.files){
   vars <- str_split(f, "_|\\.")[[1]]
   data.this <- read_tsv(paste0(directory,"/", f)) %>% 
@@ -58,16 +61,61 @@ error.summary <- data.all %>% group_by(method, browser, system, desired.frames, 
 error.summary
 ```
 
+In some cases the counts above are less than 200 trials per cell because the stimulus was never displayed so the BBTK did not record anything. We can recover those errors here.
 
-This plot shows the frequency of different errors in each condition.
+```{r}
+count.per.run <- error.summary %>% group_by(method, browser, system, desired.frames) %>% 
+  summarize(count = sum(count)) %>% filter(count < samples) %>% mutate(missing.trials = samples - count) %>%
+  mutate(frame.error = -desired.frames) %>% select(method, browser, system, desired.frames, frame.error, missing.trials) %>%
+  rename(count = missing.trials)
+
+# merge data back together
+error.summary <- rbind(error.summary, count.per.run) %>% arrange(method, browser, system, desired.frames)
+```
+
+Now we can nest the data by system and browser to generate plots for each {browser, system} pair.
+
+```{r}
+plotting.function <- function(data){
+  p <- ggplot(data, aes(x=frame.error, y=count, fill=method))+
+        scale_fill_brewer(type="qual", palette = "Set1", name="Method")+
+        geom_vline(xintercept = 0, color="grey50")+
+        geom_bar(stat='identity') +
+        labs(x="Error in displayed frame count", y="Count")+
+        facet_grid(method ~ desired.frames)+
+        theme_minimal()+
+        theme(panel.grid=element_blank())
+  return(p)
+}
+
+nested.error.summary <- error.summary %>% group_by(browser, system) %>% nest() %>% mutate(plot = map(data, plotting.function))
+```
+
+## Chrome, PC
 
 ```{r fig.height=12, fig.width=12}
-ggplot(error.summary, aes(x=frame.error, y=count, fill=method))+
-  scale_fill_brewer(type="qual", palette = "Set1", name="Method")+
-  geom_vline(xintercept = 0, color="grey50")+
-  geom_bar(stat='identity') +
-  labs(x="Error in displayed frame count", y="Count")+
-  facet_grid(method ~ desired.frames)+
-  theme_minimal()+
-  theme(panel.grid=element_blank())
+(nested.error.summary %>% filter(system == 'pc', browser == 'chrome'))$plot[[1]]
+```
+## Chrome, Linux
+
+```{r fig.height=12, fig.width=12}
+(nested.error.summary %>% filter(system == 'linux', browser == 'chrome'))$plot[[1]]
+```
+
+## Firefox, PC
+
+```{r fig.height=12, fig.width=12}
+(nested.error.summary %>% filter(system == 'pc', browser == 'firefox'))$plot[[1]]
+```
+
+## Firefox, Linux
+
+```{r fig.height=12, fig.width=12}
+(nested.error.summary %>% filter(system == 'linux', browser == 'firefox'))$plot[[1]]
+```
+
+## Edge, PC
+
+```{r fig.height=12, fig.width=12}
+(nested.error.summary %>% filter(system == 'pc', browser == 'edge'))$plot[[1]]
 ```
