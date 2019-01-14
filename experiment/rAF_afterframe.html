@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="common.css" />
+</head>
+
+<body>
+  <div id="config">
+    <p>Stimulus Duration: <input type="number" id="duration"></input></p>
+    <p>ITI: <input type="number" id="iti"></input></p>
+    <p>Trials: <input type="number" id="trials"></input></p>
+    <button id="start">Start</button>
+  </div>
+  <div id="target"></div>
+</body>
+
+<script>
+
+var duration = 0;
+var iti = 0;
+var trials = 0;
+
+document.querySelector('#start').addEventListener('click', beginExperiment);
+
+function beginExperiment(){
+  duration = document.querySelector('#duration').value;
+  iti = document.querySelector('#iti').value;
+  trials = document.querySelector('#trials').value;
+
+  document.querySelector('#config').remove();
+  document.querySelector('#target').remove();
+
+  setTimeout(startTrial, 1000);
+}
+
+var start_time;
+var frame_time_estimate;
+var last_frame_time;
+
+const channel = new MessageChannel();
+var callback = function(){ return undefined; }
+
+channel.port1.onmessage = function(){
+  var time = performance.now();
+  callback(time);
+}
+
+function postMessage() {
+  channel.port2.postMessage(undefined);
+}
+
+function afterFrame(cb){
+  callback = cb;
+  requestAnimationFrame(postMessage);
+}
+
+function startTrial() {
+  // create the stimulus string to display
+  var html = '<div id="stim"></div>';
+  // add the stimulus to the document via .innerHTML property
+  document.querySelector('body').innerHTML = html;
+
+  afterFrame(function(timestamp){
+    start_time = timestamp;
+    // reset the frame time estimate
+    last_frame_time = start_time;
+    // set up next frame call to check for timeout
+    afterFrame(checkForTimeout);
+  });
+}
+
+function checkForTimeout(timestamp) {
+  // get the estimated length of a single frame
+  var frame_time_estimate = timestamp - last_frame_time;
+  // calculate an estimate of how long the stimulus has been on the screen
+  var curr_duration = timestamp - start_time;
+  // check if the current duration is at least as long as the intended duration
+  // minus half the estimated frame time. this helps avoid displaying the stimulus
+  // for one too many frames.
+  if (curr_duration >= duration - frame_time_estimate/2) {
+    endTrial();
+  } else {
+    last_frame_time = timestamp;
+    window.requestAnimationFrame(checkForTimeout);
+  }
+}
+
+function endTrial() {
+  // remove stimulus from display
+  document.querySelector('#stim').remove();  
+  // check if there are more trials to do;
+  // either run another trial or end the experiment
+  trials--;
+  if(trials == 0){
+    finishExperiment();
+  } else {
+    setTimeout(startTrial, iti);
+  }
+}
+
+function finishExperiment(){
+  document.querySelector('html').style.height = "calc(100vh - 60px)";
+  document.querySelector('html').style.borderWidth = "30px";
+  document.querySelector('html').style.borderColor = "green";
+  document.querySelector('html').style.borderStyle = "solid";
+}
+
+</script>
+</html>
