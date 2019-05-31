@@ -119,14 +119,14 @@ ggplot(combined.data.devices.frame.diff, aes(x=reorder(subject,value,FUN=median)
   facet_wrap(~device)
 # there are definitely outlier values so some sort of trimming is needed
 
-# for (k in subjects.device.type) {
-#   subj.data <- subset(combined.data.devices.frame.diff, subject == k)
-#   subj.data <- droplevels(subj.data)
-#   png(paste("frame_rate_boxplot_", k, ".png", sep = ""))
-#   print(ggplot(subj.data, aes(x=subject, y=value)) +
-#     geom_boxplot(outlier.colour = "red"))   
-#   dev.off()
-# }
+for (k in subjects.device.type) {
+  subj.data <- subset(combined.data.devices.frame.diff, subject == k)
+  subj.data <- droplevels(subj.data)
+  png(paste("frame_rate_boxplot_", k, ".png", sep = ""))
+  print(ggplot(subj.data, aes(x=subject, y=value)) +
+    geom_boxplot(outlier.colour = "red"))
+  dev.off()
+}
 
 ## summary of by-participant variability
 ppt.variability <- combined.data.devices.frame.diff %>% group_by(subject) %>% summarize(
@@ -205,3 +205,17 @@ counts.by.estimate.type <- final.estimates.combined.long %>%
 counts.60hz.by.estimate.type <- final.estimates.combined.long %>% 
   group_by(estimate.type) %>%
   summarise(n=length(estimate[estimate >= 59 & estimate <= 61]),p=n/length(estimate))
+
+## investigate rates lower than ~60 Hz
+ppts.lower.than.60hz <- final.estimates.combined.all %>%
+  filter(frame.rate.no.outliers.10pc < 58) %>%
+  arrange(frame.rate.no.outliers.10pc)
+
+# histograms 
+for (l in 1:length(ppts.lower.than.60hz$subject)) {
+  png(paste("hist_trimmed_10pc_", ppts.lower.than.60hz$subject[l], ".png", sep = ""))
+  print(ggplot(combined.data.devices.frame.diff.no.outliers.10pc[combined.data.devices.frame.diff.no.outliers.10pc$subject==ppts.lower.than.60hz$subject[l],], 
+         aes(x=value)) +
+    geom_histogram(binwidth=1))
+  dev.off()
+}
