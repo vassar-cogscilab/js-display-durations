@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    html {
+      background-color: black;
+      color: white;
+    }
+    #stim {
+      position: absolute;
+      top: calc(50% - 100px);
+      left: calc(50% - 100px);
+      width: 200px;
+      height: 200px;
+      visibility: hidden;
+      background-color: white;
+    }
+    #config {
+      position: absolute;
+      top: 50px;
+      left: calc(50% - 200px);
+      width: 400px;
+      height: 225px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div id="config">
+    <p>requestAnimationFrame for all timing, including ITIs.<br>Frame counting version. Assumes 60 Hz monitor.</p>
+    <p>Stimulus Duration (ms): <input type="number" id="duration"></input></p>
+    <p>ITI (ms): <input type="number" id="iti"></input></p>
+    <p>Trials: <input type="number" id="trials"></input></p>
+    <button id="start">Start</button>
+  </div>
+  <div id="stim"></div>
+</body>
+<script>
+
+var stim_duration = 0;
+var iti_duration = 0;
+var trials = 0;
+var frame_duration = 16.67;
+var start_state = "stim";
+var trials_total;
+var current_state;
+var stim_frames;
+var iti_frames;
+var stim_start_time;
+var stim_end_time;
+
+var data = [];
+
+document.querySelector('#start').addEventListener('click', function(){
+  stim_duration = document.querySelector('#duration').value;
+  iti_duration = document.querySelector('#iti').value;
+  trials = document.querySelector('#trials').value;
+  // this is a hack because the trials variable decrements before the first trial starts - need to fix.
+  trials++;
+  trials_total = trials - 1;
+
+  document.querySelector('#config').remove();
+
+  next();
+});
+
+function hideStim() {
+  stim_end_time = window.performance.now();
+  document.querySelector('#stim').style.visibility = 'hidden';
+}
+
+function showStim() {
+  stim_start_time = window.performance.now();
+  document.querySelector('#stim').style.visibility = 'visible';
+}
+
+function durationToFrames(duration, frame_duration) {
+  // takes any duration and converts it to number of frames and closest duration that is a multiple of the frame rate
+  var lower_dur = Math.floor(duration/frame_duration) * frame_duration;
+  var upper_dur = Math.ceil(duration/frame_duration) * frame_duration;
+  var duration_adj;
+  if ((duration - lower_dur) <= (frame_duration/2)) {
+    duration_adj = lower_dur;
+  } else {
+    duration_adj = upper_dur;
+  }
+  var target_frame_count = duration_adj/frame_duration;
+  return {target_frame_count, duration_adj};
+}
+
+function checkForTimeouts(timestamp, start_time, intended_delay, intended_frame_count, event_fn) {
+  var curr_delay = timestamp - start_time;
+  var frame_diff = frame_count - intended_frame_count;
+  var time_diff = curr_delay - intended_delay;
+  var time_diff_threshold = -(intended_delay - ((intended_frame_count-1)*frame_duration))/2;
+  if ((frame_diff >= 0 && time_diff >= time_diff_threshold) || (frame_diff >= -1 && time_diff >= 0)) {
+    // enough time/frames have passed, so change state (stim to ITI or vice versa)
+    if (current_state == "stim") {
+      data.push({
+        trial_number: trials_total - trials,
+        curr_delay,
+        intended_delay,
+        frame_count,
+        intended_frame_count,
+        time_diff,
+        frame_diff
+      });
+    }
+    event_fn();
+  } else {
+    // not enough time has elapsed, so call rAF with this function as the callback again
+    rAF_reference = window.requestAnimationFrame(function(timestamp) {
+      frame_count++;
+      checkForTimeouts(timestamp, start_time, intended_delay, intended_frame_count, event_fn);
+    });
+  }
+}
+
+function next() {
+  // called once at the start of the experiment
+  current_state = start_state;
+  
+  stim_frames = durationToFrames(stim_duration, frame_duration);
+  iti_frames = durationToFrames(iti_duration, frame_duration);
+  console.log('stim frames: ', stim_frames);
+  console.log('iti frames: ', iti_frames);
+
+  window.requestAnimationFrame(function(timestamp) {
+    // 1st rAF call just used to set up next call, due to timing variability for 1st call
+    stateChange();
+  });
+}
+
+function stateChange() {
+  frame_count = 0;
+  var rAF_reference = window.requestAnimationFrame(function(timestamp) {
+    if (current_state == "iti") {
+      // change from ITI to stim display, start of trial
+      showStim();
+      current_state = "stim";
+      checkForTimeouts(timestamp, stim_start_time, stim_frames.duration_adj - 5, stim_frames.target_frame_count, stateChange);
+    } else if (current_state == "stim") {
+      // change from stim display to ITI, end of trial
+      hideStim();
+      current_state = "iti";
+      trials--;
+      if (trials === 0) {
+        done();
+      } else {
+        checkForTimeouts(timestamp, stim_end_time, iti_frames.duration_adj - 5, iti_frames.target_frame_count, stateChange);
+      }
+    }
+  });
+}
+
+function done() {
+  if (typeof rAF_reference !== 'undefined') {
+    window.cancelAnimationFrame(rAF_reference);
+  }
+  document.querySelector('html').style.height = "calc(100vh - 60px)";
+  document.querySelector('html').style.borderWidth = "30px";
+  document.querySelector('html').style.borderColor = "green";
+  document.querySelector('html').style.borderStyle = "solid";
+  console.log(data);
+}
+
+</script>
+</html>
