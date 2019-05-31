@@ -5,3 +5,6 @@
 
 /refresh_rates/php/database_config.php
 
+/analysis/Thumbs.db
+*.png
+
