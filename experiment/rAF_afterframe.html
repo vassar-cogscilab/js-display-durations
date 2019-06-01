@@ -37,24 +37,36 @@ var start_time;
 var frame_time_estimate;
 var last_frame_time;
 
+const channel = new MessageChannel();
+var callback = function(){ return undefined; }
+
+channel.port1.onmessage = function(){
+  var time = performance.now();
+  callback(time);
+}
+
+function postMessage() {
+  channel.port2.postMessage(undefined);
+}
+
+function afterFrame(cb){
+  callback = cb;
+  requestAnimationFrame(postMessage);
+}
+
 function startTrial() {
-  // first call to rAF is only used to setup the next rAF call
-  // this makes the timing of the second rAF much more consistent
-  window.requestAnimationFrame(function(){
-    window.requestAnimationFrame(function(timestamp) {
-      // create the stimulus string to display
-      var html = '<div id="stim"></div>';
-      // add the stimulus to the document via .innerHTML property
-      document.querySelector('body').innerHTML = html;
-      // record the start time 
-      start_time = timestamp;
-      // reset the frame time estimate
-      frame_time_estimate = null;
-      last_frame_time = start_time;
-      // setup the next rAF call to check for timeouts.
-      window.requestAnimationFrame(checkForTimeout);
-    });
-  }); 
+  // create the stimulus string to display
+  var html = '<div id="stim"></div>';
+  // add the stimulus to the document via .innerHTML property
+  document.querySelector('body').innerHTML = html;
+
+  afterFrame(function(timestamp){
+    start_time = timestamp;
+    // reset the frame time estimate
+    last_frame_time = start_time;
+    // set up next frame call to check for timeout
+    afterFrame(checkForTimeout);
+  });
 }
 
 function checkForTimeout(timestamp) {

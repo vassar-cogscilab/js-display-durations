@@ -46,7 +46,7 @@ function beginExperiment(){
   document.querySelector('#wait').style.visibility = 'visible';
   estimate_frame_rate(function(frame_rate){
     estimated_frame_duration = frame_rate;
-    //console.log(estimated_frame_duration);
+    target_frame_count = Math.round(duration / estimated_frame_duration);
     document.querySelector('#wait').remove();
     setTimeout(startTrial, 1000);
   }, 5000, true);
@@ -54,8 +54,6 @@ function beginExperiment(){
 
 function startTrial() {
   frame_count = 0;
-  target_frame_count = Math.round(duration / estimated_frame_duration);
-  //console.log(target_frame_count);
   // first call to rAF is only used to setup the next rAF call
   // this makes the timing of the second rAF much more consistent
   window.requestAnimationFrame(function(){
@@ -64,8 +62,8 @@ function startTrial() {
       var html = '<div id="stim"></div>';
       // add the stimulus to the document via .innerHTML property
       document.querySelector('body').innerHTML = html;
-      // record the start time 
-      start_time = timestamp;
+      
+      window.performance.mark('start');
       // setup the next rAF call to check for timeouts.
       window.requestAnimationFrame(checkForTimeout);
     });
@@ -76,6 +74,7 @@ function startTrial() {
 function checkForTimeout(timestamp) {
   frame_count++;
   if(frame_count >= target_frame_count){
+    window.performance.mark('stop');
     endTrial();
   } else {
     window.requestAnimationFrame(checkForTimeout);
@@ -85,6 +84,8 @@ function checkForTimeout(timestamp) {
 function endTrial() {
   // remove stimulus from display
   document.querySelector('#stim').remove();
+
+  window.performance.measure('t_'+trials, 'start', 'stop');
   // check if there are more trials to do
   // either run another trial or end the experiment
   trials--;
