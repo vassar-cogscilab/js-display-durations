@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="frame_rate_estimation.js"></script>
+  <link rel="stylesheet" href="common.css" />
+  <style>
+    #wait {
+      position: absolute;
+      top: 50px;
+      left: calc(50% - 200px);
+      width: 400px;
+      text-align: center;
+      visibility: hidden;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="config">
+    <p>Stimulus Duration: <input type="number" id="duration"></input></p>
+    <p>ITI: <input type="number" id="iti"></input></p>
+    <p>Trials: <input type="number" id="trials"></input></p>
+    <button id="start">Start</button>
+  </div>
+  <div id="target"></div>
+  <div id="wait"><p>Calculating frame rate. Please wait...</p></div>
+</body>
+
+<script>
+
+var duration = 0;
+var iti = 0;
+var trials = 0;
+var estimated_frame_duration = null;
+var frame_count;
+var target_frame_count;
+
+document.querySelector('#start').addEventListener('click', beginExperiment);
+
+function beginExperiment(){
+  duration = document.querySelector('#duration').value;
+  iti = document.querySelector('#iti').value;
+  trials = document.querySelector('#trials').value;
+
+  document.querySelector('#config').remove();
+  document.querySelector('#wait').style.visibility = 'visible';
+  estimate_frame_rate(function(frame_rate){
+    estimated_frame_duration = frame_rate;
+    target_frame_count = Math.round(duration / estimated_frame_duration);
+    document.querySelector('#wait').remove();
+    window.requestAnimationFrame(startTrial);
+  }, 5000, true);
+}
+
+// function rafUpdate(ts){
+//   if(state == 'SHOW'){
+//     if(frame_count == 0){
+//       // create the stimulus string to display
+//       var html = '<div id="stim"></div>';
+//       // add the stimulus to the document via .innerHTML property
+//       document.querySelector('body').innerHTML = html;
+//     }    
+//   }
+//   if(state == 'HIDE'){
+//     if(frame_count==0){
+//       // remove stimulus from display
+//       document.querySelector('#stim').remove();
+//     }
+//   }
+// }
+
+function startTrial() {
+  frame_count = 0;
+  var html = '<div id="stim"></div>';
+  // add the stimulus to the document via .innerHTML property
+  document.querySelector('body').innerHTML = html;
+  window.requestAnimationFrame(checkForTimeout);
+}
+
+
+function checkForTimeout() {
+  frame_count++;
+  if(frame_count >= target_frame_count){
+    endTrial();
+  } else {
+    window.requestAnimationFrame(checkForTimeout);
+  }
+}
+
+function endTrial() {
+  // remove stimulus from display
+  document.querySelector('#stim').remove();
+
+  // check if there are more trials to do
+  // either run another trial or end the experiment
+  trials--;
+  if(trials == 0){
+    finishExperiment();
+  } else {
+    frame_count = 0;
+    window.requestAnimationFrame(checkForITI);
+  }
+}
+
+function checkForITI() {
+  frame_count++;
+  if(frame_count >= target_frame_count){
+    startTrial();
+  } else {
+    window.requestAnimationFrame(checkForITI);
+  }
+}
+
+function finishExperiment(){
+  document.querySelector('html').style.height = "calc(100vh - 60px)";
+  document.querySelector('html').style.borderWidth = "30px";
+  document.querySelector('html').style.borderColor = "green";
+  document.querySelector('html').style.borderStyle = "solid";
+}
+
+</script>
+</html>
