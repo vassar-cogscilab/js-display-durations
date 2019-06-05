@@ -49,6 +49,7 @@ var stim_frames;
 var iti_frames;
 var stim_start_time;
 var stim_end_time;
+var frame_count;
 
 var data = [];
 
@@ -107,7 +108,7 @@ function checkForTimeouts(timestamp, start_time, intended_delay, intended_frame_
         frame_diff
       });
     }
-    event_fn();
+    event_fn(timestamp);
   } else {
     // not enough time has elapsed, so call rAF with this function as the callback again
     rAF_reference = window.requestAnimationFrame(function(timestamp) {
@@ -128,30 +129,28 @@ function next() {
 
   window.requestAnimationFrame(function(timestamp) {
     // 1st rAF call just used to set up next call, due to timing variability for 1st call
-    stateChange();
+    stateChange(timestamp);
   });
 }
 
-function stateChange() {
+function stateChange(timestamp) {
   frame_count = 0;
-  var rAF_reference = window.requestAnimationFrame(function(timestamp) {
-    if (current_state == "iti") {
-      // change from ITI to stim display, start of trial
-      showStim();
-      current_state = "stim";
-      checkForTimeouts(timestamp, stim_start_time, stim_frames.duration_adj - 5, stim_frames.target_frame_count, stateChange);
-    } else if (current_state == "stim") {
-      // change from stim display to ITI, end of trial
-      hideStim();
-      current_state = "iti";
-      trials--;
-      if (trials === 0) {
-        done();
-      } else {
-        checkForTimeouts(timestamp, stim_end_time, iti_frames.duration_adj - 5, iti_frames.target_frame_count, stateChange);
-      }
+  if (current_state == "iti") {
+    // change from ITI to stim display, start of trial
+    showStim();
+    current_state = "stim";
+    checkForTimeouts(timestamp, stim_start_time, stim_frames.duration_adj - 5, stim_frames.target_frame_count, stateChange);
+  } else if (current_state == "stim") {
+    // change from stim display to ITI, end of trial
+    hideStim();
+    current_state = "iti";
+    trials--;
+    if (trials === 0) {
+      done();
+    } else {
+      checkForTimeouts(timestamp, stim_end_time, iti_frames.duration_adj - 5, iti_frames.target_frame_count, stateChange);
     }
-  });
+  }
 }
 
 function done() {
