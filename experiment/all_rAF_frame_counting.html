@@ -47,6 +47,7 @@ function beginExperiment(){
   estimate_frame_rate(function(frame_rate){
     estimated_frame_duration = frame_rate;
     target_frame_count = Math.round(duration / estimated_frame_duration);
+    target_frame_count_iti = Math.round(iti / estimated_frame_duration);
     document.querySelector('#wait').remove();
     window.requestAnimationFrame(startTrial);
   }, 5000, true);
@@ -104,7 +105,7 @@ function endTrial() {
 
 function checkForITI() {
   frame_count++;
-  if(frame_count >= target_frame_count){
+  if(frame_count >= target_frame_count_iti){
     startTrial();
   } else {
     window.requestAnimationFrame(checkForITI);
