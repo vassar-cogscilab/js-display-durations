@@ -31,9 +31,7 @@
 var duration = 0;
 var iti = 0;
 var trials = 0;
-var estimated_frame_duration = null;
-var frame_count;
-var target_frame_count;
+var last_frame_time = 0;
 
 document.querySelector('#start').addEventListener('click', beginExperiment);
 
@@ -43,34 +41,30 @@ function beginExperiment(){
   trials = document.querySelector('#trials').value;
 
   document.querySelector('#config').remove();
-  document.querySelector('#wait').style.visibility = 'visible';
-  estimate_frame_rate(function(frame_rate){
-    estimated_frame_duration = frame_rate;
-    target_frame_count = Math.round(duration / estimated_frame_duration);
-    target_frame_count_iti = Math.round(iti / estimated_frame_duration);
-    document.querySelector('#wait').remove();
-    window.requestAnimationFrame(startTrial);
-  }, 5000, true);
+  window.requestAnimationFrame(startTrial);
 }
 
-function startTrial() {
-  frame_count = 0;
+function startTrial(ts) {
+  start_time = ts;
+  last_frame_time = ts;
   var html = '<div id="stim"></div>';
   // add the stimulus to the document via .innerHTML property
   document.querySelector('body').innerHTML = html;
   window.requestAnimationFrame(checkForTimeout);
 }
 
-function checkForTimeout() {
-  frame_count++;
-  if(frame_count >= target_frame_count){
-    endTrial();
+function checkForTimeout(ts) {
+  var last_frame_duration = ts - last_frame_time;
+  last_frame_time = ts;
+  var display_duration = ts - start_time;
+  if(display_duration >= duration - (last_frame_duration/2)){
+    endTrial(ts);
   } else {
     window.requestAnimationFrame(checkForTimeout);
   }
 }
 
-function endTrial() {
+function endTrial(ts) {
   // remove stimulus from display
   document.querySelector('#stim').remove();
 
@@ -80,15 +74,17 @@ function endTrial() {
   if(trials == 0){
     finishExperiment();
   } else {
-    frame_count = 0;
+    start_time = ts;
     window.requestAnimationFrame(checkForITI);
   }
 }
 
-function checkForITI() {
-  frame_count++;
-  if(frame_count >= target_frame_count_iti){
-    startTrial();
+function checkForITI(ts) {
+  var last_frame_duration = ts - last_frame_time;
+  last_frame_time = ts;
+  var display_duration = ts - start_time;
+  if(display_duration >= iti - (last_frame_duration/2)){
+    startTrial(ts);
   } else {
     window.requestAnimationFrame(checkForITI);
   }
