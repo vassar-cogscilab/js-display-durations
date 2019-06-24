@@ -43,7 +43,7 @@ function startTrial() {
   window.requestAnimationFrame(function(){
     // make an invisible change to the DOM
     var invisible_html = '<div id="stim" style="opacity:0;"></div>';
-    document.querySelector('body').innerHTML = html;
+    document.querySelector('body').innerHTML = invisible_html;
     window.requestAnimationFrame(function(timestamp) {
       // create the stimulus string to display
       var html = '<div id="stim"></div>';
