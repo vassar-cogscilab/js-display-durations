@@ -1,36 +1,79 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <style>
-    #stim {
-      position: absolute;
-      top: calc(50% - 100px);
-      left: calc(50% - 100px);
-      width: 200px;
-      height: 200px;
-      background-color: black;
-    }
-    #toggle {
-      position: absolute;
-      bottom: 10%;
-      width: 80px;
-      left: calc(50% - 40px);
-    }
-  </style>
+  <script src="frame_rate_estimation.js"></script>
+  <link rel="stylesheet" href="common.css" />
 </head>
+
 <body>
-  <div id="stim"></div>
-  <button id="toggle">Toggle Stimulus</button>
+  <div id="target"></div>
 </body>
+
 <script>
-var on = true;
-document.querySelector('#toggle').addEventListener('click', function(){
-  on = !on;
-  if(on){
-    document.querySelector('#stim').style.visibility = 'visible';
+
+var duration = 200;
+var iti = 100;
+var trials = 0;
+var last_frame_time = 0;
+
+beginExperiment();
+
+function beginExperiment(){
+  window.requestAnimationFrame(startTrial);
+}
+
+function startTrial(ts) {
+  start_time = ts;
+  last_frame_time = ts;
+  var html = '<div id="stim"></div>';
+  // add the stimulus to the document via .innerHTML property
+  document.querySelector('body').innerHTML = html;
+  window.requestAnimationFrame(checkForTimeout);
+}
+
+function checkForTimeout(ts) {
+  var last_frame_duration = ts - last_frame_time;
+  last_frame_time = ts;
+  var display_duration = ts - start_time;
+  if(display_duration >= duration - (last_frame_duration/2)){
+    endTrial(ts);
   } else {
-    document.querySelector('#stim').style.visibility = 'hidden';
+    window.requestAnimationFrame(checkForTimeout);
   }
-})
+}
+
+function endTrial(ts) {
+  // remove stimulus from display
+  document.querySelector('#stim').remove();
+
+  // check if there are more trials to do
+  // either run another trial or end the experiment
+  trials--;
+  if(trials == 0){
+    finishExperiment();
+  } else {
+    start_time = ts;
+    window.requestAnimationFrame(checkForITI);
+  }
+}
+
+function checkForITI(ts) {
+  var last_frame_duration = ts - last_frame_time;
+  last_frame_time = ts;
+  var display_duration = ts - start_time;
+  if(display_duration >= iti - (last_frame_duration/2)){
+    startTrial(ts);
+  } else {
+    window.requestAnimationFrame(checkForITI);
+  }
+}
+
+function finishExperiment(){
+  document.querySelector('html').style.height = "calc(100vh - 60px)";
+  document.querySelector('html').style.borderWidth = "30px";
+  document.querySelector('html').style.borderColor = "green";
+  document.querySelector('html').style.borderStyle = "solid";
+}
+
 </script>
 </html>
