@@ -37,7 +37,6 @@ function startTrial(ts) {
   start_time = ts;
   last_frame_time = ts;
   var html = '<div id="stim"></div>';
-  // add the stimulus to the document via .innerHTML property
   document.querySelector('body').innerHTML = html;
   window.requestAnimationFrame(checkForTimeout);
 }
@@ -54,11 +53,7 @@ function checkForTimeout(ts) {
 }
 
 function endTrial(ts) {
-  // remove stimulus from display
   document.querySelector('#stim').remove();
-
-  // check if there are more trials to do
-  // either run another trial or end the experiment
   trials--;
   if(trials == 0){
     finishExperiment();
