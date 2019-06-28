@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="frame_rate_estimation.js"></script>
+  <link rel="stylesheet" href="common.css" />
+  <style>
+    #wait {
+      position: absolute;
+      top: 50px;
+      left: calc(50% - 200px);
+      width: 400px;
+      text-align: center;
+      visibility: hidden;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="config">
+    <p>Stimulus Duration: <input type="number" id="duration"></input></p>
+    <p>ITI: <input type="number" id="iti"></input></p>
+    <p>Trials: <input type="number" id="trials"></input></p>
+    <button id="start">Start</button>
+  </div>
+  <div id="target"></div>
+  <div id="wait"><p>Calculating frame rate. Please wait...</p></div>
+</body>
+
+<script>
+
+var duration = 0;
+var iti = 0;
+var trials = 0;
+var estimated_frame_duration = 0;
+var frame_count = 0;
+var target_frame_count = 0;
+var last_frame_time = 0;
+var start_time = 0;
+
+document.querySelector('#start').addEventListener('click', beginExperiment);
+
+function beginExperiment(){
+  duration = document.querySelector('#duration').value;
+  iti = document.querySelector('#iti').value;
+  trials = document.querySelector('#trials').value;
+
+  document.querySelector('#config').remove();
+  document.querySelector('#wait').style.visibility = 'visible';
+  estimate_frame_rate(function(frame_rate) {
+    estimated_frame_duration = frame_rate;
+    console.log('estimated frame duration: ', estimated_frame_duration);
+    target_frame_count = Math.round(duration / estimated_frame_duration);
+    target_frame_count_iti = Math.round(iti / estimated_frame_duration);
+    console.log('trial target frame count: ', target_frame_count);
+    console.log('ITI target frame count: ', target_frame_count_iti);
+    document.querySelector('#wait').remove();
+    window.requestAnimationFrame(startTrial);
+  }, 5000, true);
+}
+
+function startTrial(ts) {
+  start_time = ts;
+  last_frame_time = ts;
+  frame_count = 0;
+  var html = '<div id="stim"></div>';
+  document.querySelector('body').innerHTML = html;
+  window.requestAnimationFrame(checkForTimeout);
+}
+
+function checkForTimeout(ts) {
+  frame_count++;
+  var last_frame_duration = ts - last_frame_time;
+  last_frame_time = ts;
+  var display_duration = ts - start_time;
+  // end trial if 
+  // (1) target frame count is reached and timestamp-based duration is within 1/2 frame duration of the target duration, or 
+  // (2) if the timestamp-based target duration has been reached and the frame count is within 1 of the target frame count
+  if (((frame_count >= target_frame_count) && (display_duration >= duration - (last_frame_duration/2))) || ((display_duration >= duration) && (frame_count >= target_frame_count))) {
+    endTrial(ts);
+  } else {
+    window.requestAnimationFrame(checkForTimeout);
+  }
+}
+
+function endTrial(ts) {
+  document.querySelector('#stim').remove();
+  trials--;
+  if(trials === 0){
+    finishExperiment();
+  } else {
+    frame_count = 0;
+    start_time = ts;
+    window.requestAnimationFrame(checkForITI);
+  }
+}
+
+function checkForITI(ts) {
+  frame_count++;
+  var last_frame_duration = ts - last_frame_time;
+  last_frame_time = ts;
+  var display_duration = ts - start_time;
+  if (((frame_count >= target_frame_count_iti) && (display_duration >= iti - (last_frame_duration/2))) || ((display_duration >= iti) && (frame_count >= target_frame_count_iti))) {
+    startTrial(ts);
+  } else {
+    window.requestAnimationFrame(checkForITI);
+  }
+}
+
+function finishExperiment(){
+  document.querySelector('html').style.height = "calc(100vh - 60px)";
+  document.querySelector('html').style.borderWidth = "30px";
+  document.querySelector('html').style.borderColor = "green";
+  document.querySelector('html').style.borderStyle = "solid";
+}
+
+</script>
+</html>
