@@ -47,6 +47,7 @@ function beginExperiment(){
   estimate_frame_rate(function(frame_rate){
     estimated_frame_duration = frame_rate;
     target_frame_count = Math.round(duration / estimated_frame_duration);
+    console.log('trial target frame count: ', target_frame_count);
     document.querySelector('#wait').remove();
     setTimeout(startTrial, 1000);
   }, 5000, true);

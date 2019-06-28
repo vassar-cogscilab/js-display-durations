@@ -49,6 +49,8 @@ function beginExperiment(){
     console.log(estimated_frame_duration);
     target_frame_count = Math.round(duration / estimated_frame_duration);
     target_frame_count_iti = Math.round(iti / estimated_frame_duration);
+    console.log('trial target frame count: ', target_frame_count);
+    console.log('ITI target frame count: ', target_frame_count_iti);
     document.querySelector('#wait').remove();
     window.requestAnimationFrame(startTrial);
   }, 5000, true);
