@@ -20,7 +20,11 @@
 var duration = 0;
 var iti = 0;
 var trials = 0;
+
 var last_frame_time = 0;
+var raf_start_time = 0;
+var raf_current_time = 0;
+var display_duration = 0;
 
 document.querySelector('#start').addEventListener('click', beginExperiment);
 
@@ -34,7 +38,7 @@ function beginExperiment(){
 }
 
 function startTrial(ts) {
-  start_time = ts;
+  raf_start_time = performance.now();
   last_frame_time = ts;
   var html = '<div id="stim"></div>';
   document.querySelector('body').innerHTML = html;
@@ -42,9 +46,10 @@ function startTrial(ts) {
 }
 
 function checkForTimeout(ts) {
-  var last_frame_duration = ts - last_frame_time;
+  raf_current_time = performance.now();
+  display_duration = raf_current_time - raf_start_time;
+  last_frame_duration = ts - last_frame_time;
   last_frame_time = ts;
-  var display_duration = ts - start_time;
   if(display_duration >= duration - (last_frame_duration/2)){
     endTrial(ts);
   } else {
@@ -55,18 +60,19 @@ function checkForTimeout(ts) {
 function endTrial(ts) {
   document.querySelector('#stim').remove();
   trials--;
-  if(trials == 0){
+  if(trials === 0){
     finishExperiment();
   } else {
-    start_time = ts;
+    raf_start_time = performance.now();
     window.requestAnimationFrame(checkForITI);
   }
 }
 
 function checkForITI(ts) {
-  var last_frame_duration = ts - last_frame_time;
+  raf_current_time = performance.now();
+  display_duration = raf_current_time - raf_start_time;
+  last_frame_duration = ts - last_frame_time;
   last_frame_time = ts;
-  var display_duration = ts - start_time;
   if(display_duration >= iti - (last_frame_duration/2)){
     startTrial(ts);
   } else {
