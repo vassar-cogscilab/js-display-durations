@@ -51,7 +51,7 @@ function checkForTimeout(ts) {
   last_frame_duration = ts - last_frame_time;
   last_frame_time = ts;
   if(display_duration >= duration - (last_frame_duration/2)){
-    endTrial();
+    endTrial(ts);
   } else {
     window.requestAnimationFrame(checkForTimeout);
   }
@@ -74,7 +74,7 @@ function checkForITI(ts) {
   last_frame_duration = ts - last_frame_time;
   last_frame_time = ts;
   if(display_duration >= iti - (last_frame_duration/2)){
-    startTrial();
+    startTrial(ts);
   } else {
     window.requestAnimationFrame(checkForITI);
   }
