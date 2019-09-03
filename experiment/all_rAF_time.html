@@ -63,6 +63,7 @@ function endTrial(ts) {
   if(trials === 0){
     finishExperiment();
   } else {
+    raf_start_time = performance.now();
     window.requestAnimationFrame(checkForITI);
   }
 }
